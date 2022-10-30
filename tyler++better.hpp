@@ -12,11 +12,34 @@
 namespace tpp{
     class TPPInterpreter;
     struct tpp_type;
+    std::vector<tpp_type*> _allTPPObjects;
 
     #define TPP_FUNCTION_ARGS TPPInterpreter* interpreter
     typedef void (TPP_EXTERNAL_FUNCTION_TYPE)(TPP_FUNCTION_ARGS);
 
     struct tpp_type{
+        tpp_type(){
+            _allTPPObjects.push_back(this);
+        }
+        ~tpp_type(){
+            if (boolean){
+                delete boolean;
+            }
+            if (string){
+                delete string;
+            }
+            if (number){
+                delete number;
+            }
+            // Don't delete external functions; that'd just be dumb
+            if (function){
+                delete function;
+            }
+            if (symbol){
+                delete symbol;
+            }
+            _allTPPObjects.erase(std::remove(_allTPPObjects.begin(), _allTPPObjects.end(), this), _allTPPObjects.end());
+        }
         bool* boolean = 0;
         std::string* string = 0;
         double* number = 0;
@@ -26,7 +49,26 @@ namespace tpp{
 
         std::string name = "";
         int rID; // TODO: implement
+
+        int rCount = 0;
     };
+
+    void TPP_INCREF(tpp_type* thing){ // Call TPP_INCREF when a reference to a tpp object is *stored*.
+        thing -> rCount ++;
+    }
+
+    void TPP_DECREF(tpp_type* thing){ // Call TPP_DECREF when a stored reference to a tpp object is removed.
+        thing -> rCount --;
+    }
+
+    void TPP_GARBAGECOLLECT(){
+        for (tpp_type* obj : _allTPPObjects){
+            if (obj -> rCount == 0){
+                std::cout << "Garbage collecting" << std::endl;
+                delete obj;
+            }
+        }
+    }
 
     tpp_type* MAKE_TPP_EXTERN_FUNCTION(TPP_EXTERNAL_FUNCTION_TYPE function){
         tpp_type* ret = new tpp_type;
@@ -59,7 +101,6 @@ namespace tpp{
     }
 
     tpp_type* MAKE_TPP_BOOLEAN(std::string init){
-        tpp_type* ret = new tpp_type;
         bool retBool;
         if (init == "true"){
             retBool = true;
@@ -293,6 +334,7 @@ namespace tpp{
         }
 
         void pushStack(tpp_type* item){
+            TPP_INCREF(item);
             stack.push_back(item);
         }
 
@@ -307,12 +349,14 @@ namespace tpp{
                 return nullptr;
             }
             stack.pop_back();
+            TPP_DECREF(ret);
             return ret;
         }
 
         void setVariable(tpp_type* var, std::string name = ""){
             bool doesAlreadyExist = namedGlobals[name];
             if (name != ""){
+                TPP_INCREF(var);
                 TPP_TYPE_SET_NAME(var, name);
                 namedGlobals[name] = var;
             }

@@ -49,7 +49,7 @@ public:
 
     std::string readUntil(char stopChr){
         std::string ret;
-        char chr = _read();
+        signed char chr = _read();
         while (chr != stopChr && chr != EOF){
             ret += chr;
             chr = _read();
@@ -92,12 +92,19 @@ public:
         return buffer;
     }
 
-    std::string readUntil(std::string match){
-        std::string buf;
-        std::string res;
+    std::string convert_string(std::basic_string<signed char> old){
+        std::string ret = "";
+        for (signed char x : old){
+            ret += (char)x - 127;
+        }
+        return ret;
+    }
+
+    std::string readUntil(std::basic_string<signed char> match){
+        std::basic_string<signed char> buf;
+        std::basic_string<signed char> res;
         while (true){
             buf += read();
-            std::cout << buf << std::endl;
             if (buf[buf.size() - 1] == EOF){
                 break;
             }
@@ -112,7 +119,7 @@ public:
                 buf.erase(0, 1);
             }
         }
-        return res;
+        return convert_string(res);
     }
 
     void erase(unsigned long start, unsigned long end){
