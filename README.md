@@ -82,3 +82,9 @@ while; // Run the virtual function on stack until it breaks
 ## The C++ Binding:
 
 Check `examples/run.cpp` for well-commented example usage of the binding.
+
+## Oh, yeah, BTW:
+
+IF you want to use it (IDK why you would), just copy `tyler++better.hpp` into your project and use it. Everything is under the namespace `tpp`, but it's *probably* safe to use `using namespace tpp;` because I prefix most names and stuff. There's some standard library EXTERN_ functions; the ones you'll want are `EXTERN_print` and `EXTERN_input`. `EXTERN_printV` prints like `pStack`, and `EXTERN_stringMerge` merges strings.
+
+This is not memory safe. Just gonna be real honest. Nothing is ever deleted so there's huge memory leaks. My next goal is reference counting; for now, just... hope.
